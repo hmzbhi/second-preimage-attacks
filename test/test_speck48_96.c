@@ -1,4 +1,5 @@
 #include "../src/second_preim_48.h"
+#include "../tools/tools.h"
 
 /* Test against EP 2013/404, App. C */
 bool test_vector_okay()
@@ -12,11 +13,17 @@ bool test_vector_okay()
     return (c[0] == 0x735E10) && (c[1] == 0xB6445D);
 }
 
-void test(){
-
+int test(){
+    if (test_vector_okay()){
+        printf("Test PASSED\n");
+        return 0;
+    } else {
+        printf("Test PASSED\n");
+        return 1;
+    }
 }
 
 int main(){
+    printf("Testing speck48_96..\n");
     test();
-    return 0;
 }

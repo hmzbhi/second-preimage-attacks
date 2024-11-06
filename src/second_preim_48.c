@@ -22,7 +22,8 @@ void speck48_96(const uint32_t k[4], const uint32_t p[2], uint32_t c[2])
 
 	for (unsigned i = 0; i < 23; i++)
 	{
-		/* FILL ME */
+		c[0] = ((ROTL24_16(c[0]) + c[1]) ^ rk[i]) & 0xFFFFFF;
+		c[1] = ROTL24_3(c[1]) ^ c[0];
 	}
 
 	return;
