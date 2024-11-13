@@ -64,7 +64,16 @@ void speck48_96_inv(const uint32_t k[4], const uint32_t c[2], uint32_t p[2])
  */
 uint64_t cs48_dm(const uint32_t m[4], const uint64_t h)
 {
-	/* FILL ME */
+	uint32_t p[2] = {h & 0xFFFFFF, (h >> 24) & 0xFFFFFF};
+	uint32_t c[2];
+
+	speck48_96(m, p, c);
+
+	c[0] ^= p[0];
+	c[1] ^= p[1];
+
+	return ((uint64_t)c[1] << 24) | (uint64_t)c[0];
+
 }
 
 /* Assumes message length is fourlen * four blocks of 24 bits, each stored as the low bits of 32-bit words

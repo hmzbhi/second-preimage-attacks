@@ -15,6 +15,8 @@ For this question, the implémentation of `speck48_96_inv` is in [second_preim_4
 
 ### Q.1.3
 
+For this question, the implémentation of `cs48_dm` is in [second_preim_48.c](src/second_preim_48.c) and the test verifying the correctness of our implementation is in [test_speck48_96_inv.c](test/test_cs48_dm.c).
+
 ### Q.1.4
 
 ## Part two: the attack

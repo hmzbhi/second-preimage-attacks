@@ -30,7 +30,7 @@ $(TEST_EXEC): $(OBJ_FILES) $(TEST_FILES)
 test: $(TEST_EXEC)
 	@for exec in $(TEST_EXEC); do \
 		echo "Running $$exec..."; \
-		./$$exec; \
+		./$$exec || exit 1; \
 	done
 
 # Clean up object files and test executables
