@@ -1,30 +1,40 @@
+# Compiler and flags
 CC = gcc
-CFLAGS = -Wall -Wextra -O2
+CFLAGS = -Wall -Wextra -I./tools -I./src
 
+# Directories
 SRC_DIR = src
 TEST_DIR = test
 TOOLS_DIR = tools
+ROOT_DIR = .
 
-TEST_SRC_FILES = $(SRC_DIR)/second_preim_48.c $(TOOLS_DIR)/tools.c
-TEST_OBJ_FILES = $(TEST_SRC_FILES:.c=.o)
-TEST_FILES = $(TEST_DIR)/test_speck48_96.c
+# Source files and object files
+SRC_FILES = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(TOOLS_DIR)/*.c)
+OBJ_FILES = $(SRC_FILES:.c=.o)
 
-all: main
+# Test files and executables
+TEST_FILES = $(wildcard $(TEST_DIR)/*.c)
+TEST_EXEC = $(patsubst $(TEST_DIR)/%.c, $(ROOT_DIR)/%, $(TEST_FILES))
 
-main: $(SRC_DIR)/attack.o $(TEST_OBJ_FILES)
-	$(CC) $(SRC_DIR)/attack.o -o main $(LDFLAGS)
+# Default target: build all test executables
+all: $(TEST_EXEC)
 
-$(SRC_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
-	$(CC) $(CFLAGS) -c $< -o $@
+# Rule to compile each test executable
+$(TEST_EXEC): $(OBJ_FILES) $(TEST_FILES)
+	@for test_file in $(TEST_FILES); do \
+		test_exec=$(ROOT_DIR)/$$(basename $$test_file .c); \
+		$(CC) $(CFLAGS) -o $$test_exec $(OBJ_FILES) $$test_file; \
+	done
 
-$(TOOLS_DIR)/%.o: $(TOOLS_DIR)/%.c $(TOOLS_DIR)/%.h
-	$(CC) $(CFLAGS) -c $< -o $@
+# Run all test executables
+test: $(TEST_EXEC)
+	@for exec in $(TEST_EXEC); do \
+		echo "Running $$exec..."; \
+		./$$exec; \
+	done
 
-test: $(TEST_OBJ_FILES) $(TEST_FILES)
-	$(CC) $(CFLAGS) $(TEST_FILES) $(TEST_OBJ_FILES) -o test_exec $(LDFLAGS)
-	./test_exec
-
+# Clean up object files and test executables
 clean:
-	rm -f $(SRC_DIR)/*.o $(TOOLS_DIR)/*.o main test_exec
+	rm -f $(OBJ_FILES) $(TEST_EXEC)
 
 .PHONY: all clean test

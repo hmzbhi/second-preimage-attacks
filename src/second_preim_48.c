@@ -31,7 +31,29 @@ void speck48_96(const uint32_t k[4], const uint32_t p[2], uint32_t c[2])
 
 void speck48_96_inv(const uint32_t k[4], const uint32_t c[2], uint32_t p[2])
 {
-	/* FILL ME */
+	uint32_t rk[23];
+	uint32_t ell[3] = {k[2], k[1], k[0]};
+
+	rk[0] = k[3];
+
+	p[0] = c[0];
+	p[1] = c[1];
+
+	/* full key schedule */
+	for (unsigned i = 0; i < 22; i++)
+	{
+		uint32_t new_ell = ((ROTL24_16(ell[0]) + rk[i]) ^ i) & 0xFFFFFF; // addition (+) is done mod 2**24
+		rk[i+1] = ROTL24_3(rk[i]) ^ new_ell;
+		ell[0] = ell[1];
+		ell[1] = ell[2];
+		ell[2] = new_ell;
+	}
+
+	for (int i = 22; i >= 0; i--)
+	{
+		p[1] = ROTL24_21(p[0] ^ p[1]);
+		p[0] = ROTL24_8(((p[0] ^ rk[i]) - p[1]) & 0xFFFFFF);
+	}
 }
 
 /* The Davies-Meyer compression function based on speck48_96,

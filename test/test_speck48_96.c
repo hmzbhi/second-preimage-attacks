@@ -16,9 +16,10 @@ bool test_vector_okay()
 int test(){
     if (test_vector_okay()){
         printf("Test PASSED\n");
+        printf("\n");
         return 0;
     } else {
-        printf("Test PASSED\n");
+        printf("Test FAILED\n");
         return 1;
     }
 }
