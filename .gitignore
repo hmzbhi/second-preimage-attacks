@@ -1,3 +1,10 @@
+test_*
+
+!*.md
+!Makefile
+!*.c
+!*.h
+
 .vscode/
 *.o
 */*.o

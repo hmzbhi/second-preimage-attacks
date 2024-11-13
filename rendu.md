@@ -19,6 +19,10 @@ For this question, the implémentation of `cs48_dm` is in [second_preim_48.c](sr
 
 ### Q.1.4
 
+In order to find a point `fp` such that `cs48_dm(m,fp) == fp`, we need to solve the equation `speck48_96(m, fp) == 0`. To do this, we can apply the inverse function `speck48_96_inv` to both sides, yielding `fp == speck48_96_inv(m, 0)`
+
+The implémentation of `get_cs48_dm_fp` is in [second_preim_48.c](src/second_preim_48.c) and the test verifying the correctness of our implementation is in [test_speck48_96_inv.c](test/test_get_cs48_dm_fp.c).
+
 ## Part two: the attack
 
 ### Q.2.1

@@ -90,7 +90,7 @@ uint64_t hs48(const uint32_t *m, uint64_t fourlen, int padding, int verbose)
 	{
 		h = cs48_dm(mp, h);
 		if (verbose)
-			printf("@%llu : %06X %06X %06X %06X => %06llX\n", i, mp[0], mp[1], mp[2], mp[3], h);
+			printf("@%lu : %06X %06X %06X %06X => %06lX\n", i, mp[0], mp[1], mp[2], mp[3], h);
 		mp += 4;
 	}
 	if (padding)
@@ -102,7 +102,7 @@ uint64_t hs48(const uint32_t *m, uint64_t fourlen, int padding, int verbose)
 		pad[3] = 0;
 		h = cs48_dm(pad, h);
 		if (verbose)
-			printf("@%llu : %06X %06X %06X %06X => %06llX\n", fourlen, pad[0], pad[1], pad[2], pad[3], h);
+			printf("@%lu : %06X %06X %06X %06X => %06lX\n", fourlen, pad[0], pad[1], pad[2], pad[3], h);
 	}
 
 	return h;
@@ -111,7 +111,13 @@ uint64_t hs48(const uint32_t *m, uint64_t fourlen, int padding, int verbose)
 /* Computes the unique fixed-point for cs48_dm for the message m */
 uint64_t get_cs48_dm_fp(uint32_t m[4])
 {
-	/* FILL ME */
+	/* we need a h s.t cs48_dm(m, h) = h,thus speck48_96(m, h) = 0 and  
+	we have speck48_96_inv(m, 0) = h */
+	uint32_t p[2] = {0, 0};
+	uint32_t c[2] = {0, 0};
+
+	speck48_96_inv(m, c, p);
+	return ((uint64_t)p[1] << 24) | (uint64_t)p[0];
 }
 
 /* Finds a two-block expandable message for hs48, using a fixed-point
