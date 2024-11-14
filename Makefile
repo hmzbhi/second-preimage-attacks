@@ -1,6 +1,6 @@
 # Compiler and flags
 CC = gcc
-CFLAGS = -Wall -Wextra -I./tools -I./src
+CFLAGS = -march=native -O3 -Wall -g
 
 # Directories
 SRC_DIR = src

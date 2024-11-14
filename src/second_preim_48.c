@@ -1,4 +1,5 @@
 #include "second_preim_48.h"
+#include "xoshiro.h"
 
 void speck48_96(const uint32_t k[4], const uint32_t p[2], uint32_t c[2])
 {
@@ -128,21 +129,27 @@ uint64_t get_cs48_dm_fp(uint32_t m[4])
 */
 
 struct Hashmap* init_hash(uint64_t nb_buckets) 
-{
+{	
 	struct Hashmap *hash = malloc(sizeof(struct Hashmap));
+	if (!hash) 
+	{
+		fprintf(stderr, "Failed to allocate memory for Hashmap structure.\n");
+		exit(EXIT_FAILURE);
+	}
 	// Initialize the mask and fill_mask used for efficient indexing
-	uint64_t hash_mask;
-	uint64_t fill_mask;
+	uint64_t hash_mask = 0;
+	uint64_t fill_mask = 0;
 
 	// This sets hash_mask to have 1's from the MSB of nb_buckets downward
 	for (int i = 63; i>= 0; i--)
 	{
-		if (fill_mask)
-		{
-			hash_mask |= ((uint64_t)1 << i);
-		} else if ((!fill_mask) && (nb_buckets & ((uint64_t)1 << i)))
+		if ((!fill_mask) && (nb_buckets & ((uint64_t)1 << i)))
 		{
 			fill_mask = 1;
+		}
+		if (fill_mask)
+		{
+			hash_mask = hash_mask | ((uint64_t)1 << i);
 		}
 	}
 
@@ -151,14 +158,25 @@ struct Hashmap* init_hash(uint64_t nb_buckets)
 	hash->bucket_count = hash_mask+1;
 	// Allocate memory for the bucket array, initialized to NULL
 	hash->buckets = calloc(hash->bucket_count, sizeof(struct HashNode*));
+	if (!hash->buckets) 
+	{
+		fprintf(stderr, "Failed to allocate memory for buckets.\n");
+		free(hash);
+		exit(EXIT_FAILURE);
+	}
 
 	return hash;
 }
 
 void add_hash(struct Hashmap* hash, uint64_t k, uint32_t v[4]) 
 {
-	struct HashNode *new_node = malloc(sizeof(struct HashNode));
 	int64_t bucket = k & (hash->hash_mask);
+	struct HashNode *new_node = malloc(sizeof(struct HashNode));
+	if (!new_node) 
+	{
+		fprintf(stderr, "Failed to allocate memory for HashNode structure.\n");
+		exit(EXIT_FAILURE);
+	}
 	
 	new_node->k = k;
 	memcpy(new_node->v, v, 4*sizeof(uint32_t));
@@ -203,8 +221,8 @@ void free_hash(struct Hashmap* hash)
 
 void rdm_block(uint32_t m[4])
 {
-	uint64_t a = __my_little_xoshiro256starstar__next__unsafe();
-	uint64_t b = __my_little_xoshiro256starstar__next__unsafe();
+	uint64_t a = xoshiro256starstar_random_unsafe();
+	uint64_t b = xoshiro256starstar_random_unsafe();
 
 	m[0] = a & 0xFFFFFF;
 	m[1] = (a >> 24) & 0xFFFFFF;
@@ -219,9 +237,9 @@ void rdm_block(uint32_t m[4])
 void find_exp_mess(uint32_t m1[4], uint32_t m2[4]) 
 {
     
-	unsigned N = 15000000;
+	uint64_t N = 15000000;
     const float load_factor = 0.75;
-    unsigned nb_buckets = (unsigned)(((float)N) / load_factor);
+    uint64_t nb_buckets = (uint64_t)(((float)N) / load_factor);
     
 	struct Hashmap *hash = init_hash(nb_buckets);
 

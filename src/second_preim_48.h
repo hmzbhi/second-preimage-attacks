@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <math.h>
 #include <string.h>
-#include "xoshiro.h"
 
 #define ROTL24_16(x) ((((x) << 16) ^ ((x) >> 8)) & 0xFFFFFF)
 #define ROTL24_3(x) ((((x) << 3) ^ ((x) >> 21)) & 0xFFFFFF)
@@ -34,17 +33,17 @@ struct HashNode
 struct Hashmap
 {
   struct HashNode **buckets;
-  uint64_t hash_mask;
   uint64_t bucket_count;
+  uint64_t hash_mask;
 };
 
-struct Hashmap* hashmap_init(uint64_t nb_buckets) ;
+struct Hashmap* hashmap_init(uint64_t nb_buckets);
 
 void add_hash(struct Hashmap* hash, uint64_t k, uint32_t v[4]);
 
 int get_hash(struct Hashmap* hash, uint64_t k, uint32_t v[4]);
 
-void free_hash(struct Hashmap* hash) ;
+void free_hash(struct Hashmap* hash);
 
 
 /* the inverse cipher */

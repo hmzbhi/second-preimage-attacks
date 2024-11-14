@@ -1,7 +1,7 @@
 #include "../src/second_preim_48.h"
 #include "../tools/tools.h"
 
-int test_em(void){
+void test_em(void){
     uint32_t m1[4];
     uint32_t m2[4];
 
@@ -15,14 +15,18 @@ int test_em(void){
     if (h1 == h2){
         printf("PASSED in %lu ticks\n", end - start);
         printf("\n");
-        return 0;
     }
     printf("FAILED \n");
     printf("\n");
-    return 1;
+}
+
+void test_perf_em(){
+    
 }
 
 int main(){
     printf("Testing find_exp_mess..\n");
     test_em();
+    test_perf_em();
+    return 0;
 }
