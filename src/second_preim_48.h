@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
+#include <string.h>
+#include "xoshiro.h"
 
 #define ROTL24_16(x) ((((x) << 16) ^ ((x) >> 8)) & 0xFFFFFF)
 #define ROTL24_3(x) ((((x) << 3) ^ ((x) >> 21)) & 0xFFFFFF)
@@ -19,6 +21,31 @@
  */
 void speck48_96(const uint32_t k[4], const uint32_t p[2], uint32_t c[2]);
 
+/* Hashmap Structure */
+
+/* Hashmap */
+struct HashNode
+{
+  uint64_t k;
+  uint32_t v[4];
+  struct HashNode *next_node;
+};
+
+struct Hashmap
+{
+  struct HashNode **buckets;
+  uint64_t hash_mask;
+  uint64_t bucket_count;
+};
+
+struct Hashmap* hashmap_init(uint64_t nb_buckets) ;
+
+void add_hash(struct Hashmap* hash, uint64_t k, uint32_t v[4]);
+
+int get_hash(struct Hashmap* hash, uint64_t k, uint32_t v[4]);
+
+void free_hash(struct Hashmap* hash) ;
+
 
 /* the inverse cipher */
 void speck48_96_inv(const uint32_t k[4], const uint32_t c[2], uint32_t p[2]);
@@ -28,6 +55,8 @@ uint64_t cs48_dm(const uint32_t m[4], const uint64_t h);
 uint64_t hs48(const uint32_t *m, uint64_t fourlen, int padding, int verbose);
 
 uint64_t get_cs48_dm_fp(uint32_t m[4]);
+
+void rdm_block(uint32_t m[4]);
 
 void find_exp_mess(uint32_t m1[4], uint32_t m2[4]);
 

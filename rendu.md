@@ -27,4 +27,8 @@ The implémentation of `get_cs48_dm_fp` is in [second_preim_48.c](src/second_pre
 
 ### Q.2.1
 
+#### Choices for the Data structure
+
+#### Performances
+
 ### Q.2.2

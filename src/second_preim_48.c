@@ -120,10 +120,130 @@ uint64_t get_cs48_dm_fp(uint32_t m[4])
 	return ((uint64_t)p[1] << 24) | (uint64_t)p[0];
 }
 
+/* Hashmap 
+ * init_hash() To initialize my hashmap
+ * add_hash() To add an element in my hashmap
+ * get_hash() To get an element in the hashmap
+ * free_hash() To free the memory allocated for my hashmap
+*/
+
+struct Hashmap* init_hash(uint64_t nb_buckets) 
+{
+	struct Hashmap *hash = malloc(sizeof(struct Hashmap));
+	// Initialize the mask and fill_mask used for efficient indexing
+	uint64_t hash_mask;
+	uint64_t fill_mask;
+
+	// This sets hash_mask to have 1's from the MSB of nb_buckets downward
+	for (int i = 63; i>= 0; i--)
+	{
+		if (fill_mask)
+		{
+			hash_mask |= ((uint64_t)1 << i);
+		} else if ((!fill_mask) && (nb_buckets & ((uint64_t)1 << i)))
+		{
+			fill_mask = 1;
+		}
+	}
+
+	// Set the number of buckets as a power of two for faster indexing
+	hash->hash_mask = hash_mask;
+	hash->bucket_count = hash_mask+1;
+	// Allocate memory for the bucket array, initialized to NULL
+	hash->buckets = calloc(hash->bucket_count, sizeof(struct HashNode*));
+
+	return hash;
+}
+
+void add_hash(struct Hashmap* hash, uint64_t k, uint32_t v[4]) 
+{
+	struct HashNode *new_node = malloc(sizeof(struct HashNode));
+	int64_t bucket = k & (hash->hash_mask);
+	
+	new_node->k = k;
+	memcpy(new_node->v, v, 4*sizeof(uint32_t));
+	new_node->next_node = hash->buckets[bucket];
+	hash->buckets[bucket] = new_node;
+}
+
+int get_hash(struct Hashmap* hash, uint64_t k, uint32_t v[4]) 
+{
+	uint64_t bucket = k & hash->hash_mask;
+	struct HashNode *node = hash->buckets[bucket];
+	
+	while (node != NULL)
+	{
+		if (node->k == k)
+		{
+			memcpy(v, node->v, 4*sizeof(uint32_t));
+			return 1;
+		}
+		node = node->next_node;
+	}
+
+	return 0;
+}
+
+void free_hash(struct Hashmap* hash) 
+{
+	for (unsigned i = 0; i < hash->bucket_count; i++)
+	{
+		struct HashNode *node = hash->buckets[i];
+		while (node != NULL)
+		{
+			struct HashNode *next = node->next_node;
+			free(node);
+			node = next;
+		}
+	}
+
+	free(hash->buckets);
+	free(hash);
+}
+
+void rdm_block(uint32_t m[4])
+{
+	uint64_t a = __my_little_xoshiro256starstar__next__unsafe();
+	uint64_t b = __my_little_xoshiro256starstar__next__unsafe();
+
+	m[0] = a & 0xFFFFFF;
+	m[1] = (a >> 24) & 0xFFFFFF;
+
+	m[2] = b & 0xFFFFFF;
+	m[3] = (b >> 24) & 0xFFFFFF;
+}
+
 /* Finds a two-block expandable message for hs48, using a fixed-point
  * That is, computes m1, m2 s.t. hs48_nopad(m1||m2) = hs48_nopad(m1||m2^*),
  * where hs48_nopad is hs48 with no padding */
-void find_exp_mess(uint32_t m1[4], uint32_t m2[4])
+void find_exp_mess(uint32_t m1[4], uint32_t m2[4]) 
 {
-	/* FILL ME */
+    
+	unsigned N = 15000000;
+    const float load_factor = 0.75;
+    unsigned nb_buckets = (unsigned)(((float)N) / load_factor);
+    
+	struct Hashmap *hash = init_hash(nb_buckets);
+
+    __my_little_xoshiro256starstar_unseeded_init();
+
+    // Step 1: Generate random first-block messages, storing their chaining values
+    for (unsigned i = 0; i < N; i++) {
+        rdm_block(m1);
+        uint64_t h = cs48_dm(m1, IV);
+        add_hash(hash, h, m1);
+    }
+
+    // Step 2: Compute fixed points for random messages until a match is found
+    while (1) {
+        rdm_block(m2);
+        uint64_t h_fp = get_cs48_dm_fp(m2);
+
+        // Check if this fixed point matches any chaining value
+        if (get_hash(hash, h_fp, m1)) {
+            break;  // Collision found
+        }
+    }
+
+    free_hash(hash);
 }

@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
+
 
 /**
  * @brief Generates random bytes to data by reading from /dev/urandom.
