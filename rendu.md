@@ -6,22 +6,22 @@ Hamza Bouihi, Bilal Akliai
 
 ### Q.1.1
 
-For this question, the implementation of `speck48_96` is in [second_preim_48.c](src/second_preim_48.c) and the test verifying the correctness of our implementation with the test values provided in [BSS+13,
+For this question, the implementation of `speck48_96` is in [second_preim_48.c](src/second_preim_48.c#L4) and the test verifying the correctness of our implementation with the test values provided in [BSS+13,
 App. C](doc/specifications.pdf), by using the (already implemented) function `test_vector_okay` is in [test_speck48_96.c](test/test_speck48_96.c).
 
 ### Q.1.2
 
-For this question, the implementation of `speck48_96_inv` is in [second_preim_48.c](src/second_preim_48.c) and the test verifying the correctness of our implementation is in [test_speck48_96_inv.c](test/test_speck48_96_inv.c).
+For this question, the implementation of `speck48_96_inv` is in [second_preim_48.c](src/second_preim_48.c#L33) and the test verifying the correctness of our implementation is in [test_speck48_96_inv.c](test/test_speck48_96_inv.c).
 
 ### Q.1.3
 
-For this question, the implementation of `cs48_dm` is in [second_preim_48.c](src/second_preim_48.c) and the test verifying the correctness of our implementation is in [test_speck48_96_inv.c](test/test_cs48_dm.c).
+For this question, the implementation of `cs48_dm` is in [second_preim_48.c](src/second_preim_48.c#L66) and the test verifying the correctness of our implementation is in [test_speck48_96_inv.c](test/test_cs48_dm.c).
 
 ### Q.1.4
 
 In order to find a point `fp` such that `cs48_dm(m,fp) == fp`, we need to solve the equation `speck48_96(m, fp) == 0`. To do this, we can apply the inverse function `speck48_96_inv` to both sides, yielding `fp == speck48_96_inv(m, 0)`
 
-The implementation of `get_cs48_dm_fp` is in [second_preim_48.c](src/second_preim_48.c) and the test verifying the correctness of our implementation is in [test_speck48_96_inv.c](test/test_get_cs48_dm_fp.c).
+The implementation of `get_cs48_dm_fp` is in [second_preim_48.c](src/second_preim_48.c#L113) and the test verifying the correctness of our implementation is in [test_speck48_96_inv.c](test/test_get_cs48_dm_fp.c).
 
 ## Part two: the attack
 
@@ -39,9 +39,9 @@ Hashmaps have a size defined by their number of buckets $N_b$, which we need to 
 
 ### Implementation
 
-- The implementation of `find_exp_mess` is in [second_preim_48.c](src/second_preim_48.c).
+- The implementation of `find_exp_mess` is in [second_preim_48.c](src/second_preim_48.c#L250).
 
-- You can fin in [second_preim_48.h](src/second_preim_48.h), the definition of the Hashmap structure in this file and in [second_preim_48.c](src/second_preim_48.c) the implementation of `init_hash()`, `add_hash()`, `get_hash()`, and `free_hash()`.
+- You can fin in [second_preim_48.h](src/second_preim_48.h#L127), the definition of the Hashmap structure in this file and in [second_preim_48.c](src/second_preim_48.c) the implementation of `init_hash()`, `add_hash()`, `get_hash()`, and `free_hash()`.
 
 - All the test of correctness ans performances on `find_exp_mess` are implemented in [test_em.c](test/test_em.c)
 
@@ -85,3 +85,20 @@ xychart-beta
 In practice ,the best of $N$ seems to be around $14000000$ so we will take this default value.
 
 ### Q.2.2
+
+- The implementation of `attack` is in [second_preim_48.c](src/second_preim_48.c#L296).
+
+- The implementation of the tests and measure of performences are in [test_attack.c](test/test_attack.c). You'll have remove the `\\` in the `main` function if you want to run it during the  
+
+```shell
+make test 
+```
+
+The attack to find a second preimage for a message of $N'$ blocks of $4*32$ bits follows the same principle as before but requires colliding with one of the intermediate chaining values when hashing the target message.
+
+For a message with $fourlen = 2^{20}$, there are $2^{20}$ blocks of $4 \times 32$ bits. Once we generate the expandable message, the process to find the collision block is similar to before but uses `cs48_dm(cm,fp)` instead of `cs48_dm(m1,IV)`. The cost remains $C = C_1 \times N + C_2 \times \dfrac{2^{48}}{N}$, with the constraint $N < fourlen$ , as the maximum number of chaining values is limited by the number of blocks.
+
+Here, with $fourlen=2^{18}$, we set $N = 2^{18}$ to store all chaining values and try collisions with all of them. Using previously estimated $C_1$ and $C_2$, the attack's cost will be $\approx C_1 \times 2^{18} + C_2 \times \dfrac{2^{48}}{2^{18}} \approx  0.191564\times 2^{18} + 0.281541 \times \dfrac{2^{48}}{2^{18}} \approx 3 \times 10^{8}$ which is about 5 minutes on my computer.
+In practice, we have to wait $X$.
+
+The most expensive step is finding a collision with a chaining value. Parallelizing this search could reduce runtime by a factor equal to the number of CPU cores or distributed machines used.
