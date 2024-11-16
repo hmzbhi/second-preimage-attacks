@@ -279,6 +279,9 @@ void find_exp_mess(uint32_t m1[4], uint32_t m2[4])
     free_hash(hash);
 }
 
+/* 2 != expandable messages by using find_exp_mess. Having 2 of them is necessary 
+to ensure that we can get m1 != the first block of the original message*/
+
 static uint32_t EXP_MESS[2][2][4] = {
 	{
 		{0x0B7E6A, 0x2E34EE, 0x857994, 0x081772},
@@ -292,57 +295,63 @@ static uint32_t EXP_MESS[2][2][4] = {
 
 void attack(void)
 {	
-	uint64_t length = (1 << 20);
-	uint64_t fourlen = length / 4;
+	// Define the length of the original message (1 MB, 2^20 bytes)
+	uint64_t length = (1 << 20); 
+	uint64_t fourlen = length / 4; // Number of 96-bit blocks in the message
 	uint32_t block[4] = {0, 0, 0, 0};
 
-	// Creation of the message
+	// Initialize the original message with sequential blocks
 	uint32_t* mess = calloc(length, sizeof(uint32_t));
-
 	for (uint64_t i = 0; i < length; i+=4)
 	{
-		block[0] = i & 0xFFFFFF;
+		block[0] = i & 0xFFFFFF; // Only use the lower 24 bits for each block
 		memcpy(mess+i, block, 4*sizeof(uint32_t));
 	}
 
+	// Retrieve precomputed expandable message blocks (m1 and m2)
 	uint32_t* m1 = EXP_MESS[0][0];
 	uint32_t* m2 = EXP_MESS[0][1];
 
+	// Ensure m1 is different from the first block of the original message
 	if (mess[0] == m1[0] && mess[1] == m1[1] && mess[2] == m1[2] && mess[3] == m1[3])
 	{
-		m1 = EXP_MESS[1][0];
-		m2 = EXP_MESS[1][1];
+		m1 = EXP_MESS[1][0]; // Switch to an alternative precomputed m1
+		m2 = EXP_MESS[1][1]; // Switch to an alternative precomputed m2
 	}
+
 	printf("\n");
 	printf("m1: %06X %06X %06X %06X\n", m1[0], m1[1], m1[2], m1[3]);
 	printf("m2: %06X %06X %06X %06X\n", m2[0], m2[1], m2[2], m2[3]);
 	printf("\n");
 
-	uint64_t h_fp = get_cs48_dm_fp(m2);
-	uint64_t h = IV;
+	// Compute the fixed point of m2 to be used for collision
+	uint64_t h_fp = get_cs48_dm_fp(m2); 
+	uint64_t h = IV; // Initialize the chaining value with the IV
 
+	// Step 1: Compute and store all chaining values of the original message
 	printf("Calculating and storing the chaining values for the original message..\n");
 	struct Hashmap *hash = init_hash(2*fourlen);
-	uint32_t* curr_block = mess;
+	uint32_t* curr_block = mess; 
 	for (uint64_t i = 0; i < length; i+=4)
 	{
 		h = cs48_dm(curr_block, h);
-		if (i >8){
+		if (i > 8) // Skip first 2 blocks as they are replaced by the expandable message
+		{ 
 			add_hash(hash, h, curr_block);
 		}
 		curr_block += 4;
 	}
-	uint64_t real_hash = hs48(mess, fourlen, 1, 0);
+	uint64_t real_hash = hs48(mess, fourlen, 1, 0); // Compute the hash of the original message
 
+	// Step 2: Find a collision block
 	printf("Finding a collision..\n");
-
 	rdm_init();
 	uint32_t cm[4];
 	while(true){
 		rdm_block(cm);
-		uint64_t h_cm = cs48_dm(cm, h_fp);
+		uint64_t h_cm = cs48_dm(cm, h_fp); 
 		if (get_hash(hash, h_cm, block)){
-			break;
+			break; // Collision found
 		}
 	}
 
@@ -350,25 +359,28 @@ void attack(void)
 	printf("cm = %06X %06X %06X %06X\n", cm[0], cm[1], cm[2], cm[3]);
 	printf("\n");
 
+	// Retrieve the index of the collided block
 	uint64_t j = block[0];
 
 	free_hash(hash);
 
+	// Step 3: Reconstruct the second preimage
 	uint32_t* m = calloc(length, sizeof(uint32_t));
-	memcpy(m, m1, 4*sizeof(uint32_t));
+	memcpy(m, m1, 4*sizeof(uint32_t)); // Start with the first block as m1
 	for (uint64_t i = 4; i < length; i+=4)
 	{
 		if (i < j){
-			memcpy(m+i, m2, 4*sizeof(uint32_t));
+			memcpy(m+i, m2, 4*sizeof(uint32_t)); // Fill with m2 until the collided block
 		} else if (i == j){
-			memcpy(m+i, cm, 4*sizeof(uint32_t));
+			memcpy(m+i, cm, 4*sizeof(uint32_t)); // Insert the collision block
 		} else {
-			block[0] = i & 0xFFFFFF;
+			block[0] = i & 0xFFFFFF; // Remaining blocks follow the original pattern
 			memcpy(m+i, block, 4*sizeof(uint32_t));
 		}
 	}
 
-	uint64_t h_m = hs48(m, fourlen, 1, 0);
+	// Step 4: Validate the attack by comparing the hashes
+	uint64_t h_m = hs48(m, fourlen, 1, 0); 
 	if (h_m == real_hash){
 		printf("Attack successful\n");
 	} else {
@@ -378,6 +390,7 @@ void attack(void)
 	printf("The hash of the message is %lX\n", h_m);
 	printf("\n");
 
+	// Print the second preimage construction instructions
 	printf("THE SECOND PREIMAGE IS\n");
 	printf("	- %06X %06X %06X %06X repeated 1 time \n", m1[0], m1[1], m1[2], m1[3]);
 	printf("	- %06X %06X %06X %06X repeated %lu times \n", m2[0], m2[1], m2[2], m2[3], j/4 -1);
