@@ -37,7 +37,7 @@ struct Hashmap
   uint64_t hash_mask;
 };
 
-struct Hashmap* hashmap_init(uint64_t nb_buckets);
+struct Hashmap* init_hash(uint64_t nb_buckets);
 
 void add_hash(struct Hashmap* hash, uint64_t k, uint32_t v[4]);
 
@@ -56,6 +56,10 @@ uint64_t hs48(const uint32_t *m, uint64_t fourlen, int padding, int verbose);
 uint64_t get_cs48_dm_fp(uint32_t m[4]);
 
 void rdm_block(uint32_t m[4]);
+
+void rdm_init();
+
+void config_N(unsigned N);
 
 void find_exp_mess(uint32_t m1[4], uint32_t m2[4]);
 

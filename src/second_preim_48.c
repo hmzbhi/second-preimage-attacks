@@ -119,6 +119,7 @@ uint64_t get_cs48_dm_fp(uint32_t m[4])
 
 	speck48_96_inv(m, c, p);
 	return ((uint64_t)p[1] << 24) | (uint64_t)p[0];
+
 }
 
 /* Hashmap 
@@ -186,7 +187,7 @@ void add_hash(struct Hashmap* hash, uint64_t k, uint32_t v[4])
 
 int get_hash(struct Hashmap* hash, uint64_t k, uint32_t v[4]) 
 {
-	uint64_t bucket = k & hash->hash_mask;
+	unsigned bucket = k & hash->hash_mask;
 	struct HashNode *node = hash->buckets[bucket];
 	
 	while (node != NULL)
@@ -231,19 +232,31 @@ void rdm_block(uint32_t m[4])
 	m[3] = (b >> 24) & 0xFFFFFF;
 }
 
+void rdm_init()
+{
+	    __my_little_xoshiro256starstar_unseeded_init();
+}
+
+unsigned N_opti = 14000000;
+
+void config_N(unsigned N)
+{
+	N_opti = N;
+}
+
 /* Finds a two-block expandable message for hs48, using a fixed-point
  * That is, computes m1, m2 s.t. hs48_nopad(m1||m2) = hs48_nopad(m1||m2^*),
  * where hs48_nopad is hs48 with no padding */
 void find_exp_mess(uint32_t m1[4], uint32_t m2[4]) 
 {
     
-	uint64_t N = 15000000;
+	uint64_t N = N_opti;
     const float load_factor = 0.75;
     uint64_t nb_buckets = (uint64_t)(((float)N) / load_factor);
     
 	struct Hashmap *hash = init_hash(nb_buckets);
-
-    __my_little_xoshiro256starstar_unseeded_init();
+	
+	rdm_init();
 
     // Step 1: Generate random first-block messages, storing their chaining values
     for (unsigned i = 0; i < N; i++) {
