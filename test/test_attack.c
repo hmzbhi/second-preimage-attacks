@@ -25,6 +25,6 @@ void test_attack_perf()
 
 int main(){
     attack();
-    //test_attack_perf();
+    test_attack_perf();
     return 0;
 }

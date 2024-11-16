@@ -99,6 +99,6 @@ The attack to find a second preimage for a message of $N'$ blocks of $4*32$ bits
 For a message with $fourlen = 2^{20}$, there are $2^{20}$ blocks of $4 \times 32$ bits. Once we generate the expandable message, the process to find the collision block is similar to before but uses `cs48_dm(cm,fp)` instead of `cs48_dm(m1,IV)`. The cost remains $C = C_1 \times N + C_2 \times \dfrac{2^{48}}{N}$, with the constraint $N < fourlen$ , as the maximum number of chaining values is limited by the number of blocks.
 
 Here, with $fourlen=2^{18}$, we set $N = 2^{18}$ to store all chaining values and try collisions with all of them. Using previously estimated $C_1$ and $C_2$, the attack's cost will be $\approx C_1 \times 2^{18} + C_2 \times \dfrac{2^{48}}{2^{18}} \approx  0.191564\times 2^{18} + 0.281541 \times \dfrac{2^{48}}{2^{18}} \approx 3 \times 10^{8}$ which is about 5 minutes on my computer.
-In practice, we have to wait $X$.
+In practice, we have to wait $72.155243s$.
 
 The most expensive step is finding a collision with a chaining value. Parallelizing this search could reduce runtime by a factor equal to the number of CPU cores or distributed machines used.
